@@ -188,7 +188,7 @@ function addVirtualItemToSlot(addableItem, inventory, slotToAdd, itemsStacks)
 	end
 end
 
-function deleteVirtualItemFromSlot(inventory, slotToDelete, deleteCount)
+function deleteVirtualItemFromSlot(slotToDelete, inventory, deleteCount)
 	local nameOfDeletableItem = inventory[slotToDelete].itemName
 	if  nameOfDeletableItem then
 		if deleteCount and deleteCount <= inventory[slotToDelete].itemCount then
@@ -216,27 +216,44 @@ function deleteVirtualItemFromSlot(inventory, slotToDelete, deleteCount)
 	end
 end
 
-function transferVirtualItemBetweenSlots(sourceInventory, sourceSlot, destinationInventory, destinationSlot, itemsStacks, count) -- untested
+function transferVirtualItemBetweenSlots(sourceSlot, sourceInventory, destinationSlot, destinationInventory, itemsStacks, count) -- untested
 	local transferableItem = {itemName = sourceInventory[sourceSlot].itemName, itemCount = count or sourceInventory[sourceSlot].itemCount}
 	addVirtualItemToSlot(transferableItem, destinationInventory, destinationSlot, itemsStacks)
 	
 	deleteVirtualItemFromSlot(sourceInventory, sourceSlot, ((count or sourceInventory[sourceSlot].itemCount) - transferableItem.itemCount))
 end
 
-function addVirtualItemToInventory(item, inventory, itemsStacks)
-	local itemStackSize = getItemStackSize(item.itemName, itemsStacks)
+function addVirtualItemToInventory(addableItem, inventory, itemsStacks)
+	local itemStackSize = getItemStackSize(addableItem.itemName, itemsStacks)
 	
-	while item.itemCount > 0 do
-		slotToAddItem = findIf(inventory, function(slot) return slot.itemCount == 0 or (slot.itemName == item.itemName and slot.itemCount < itemStackSize) end) -- ПО-ХУЙ -- unoptimised, but work :)
+	while addableItem.itemCount > 0 do
+		local slotToAddItem = findIf(inventory, function(slot) return slot.itemCount == 0 or (slot.itemName == addableItem.itemName and slot.itemCount < itemStackSize) end) -- ПО-ХУЙ -- unoptimised, but work :) LUA!!!
 		
 		if not slotToAddItem then
 			break;
 		end
 		
-		addVirtualItemToSlot(item, inventory, slotToAddItem, itemsStacks)
+		addVirtualItemToSlot(addableItem, inventory, slotToAddItem, itemsStacks)
 	end
 end
 
+function deleteVirtualItemFromInventory(deletableItem, inventory)
+	while deletableItem.itemCount > 0 do
+		local slotToDeleteItem = findIf(inventory, function(slot) return slot.itemName == deletableItem.itemName end)
+		
+		if not slotToDeleteItem then
+			break;
+		end
+		
+		if deletableItem.itemCount > inventory[slotToDeleteItem].itemCount then
+			deletableItem.itemCount = deletableItem.itemCount - inventory[slotToDeleteItem].itemCount
+			deleteVirtualItemFromSlot(slotToDeleteItem, inventory)
+		else
+			deleteVirtualItemFromSlot(slotToDeleteItem, inventory, deletableItem.itemCount)
+			deletableItem.itemCount = 0
+		end
+	end
+end
 function pickUpMaterialsFromUser(needMaterials, chests, itemsStacks)
 	local currentChest = 1
 	local item
@@ -369,21 +386,6 @@ end
 
 --main()
 
-chest1 = getChests()[1]
-chest2 = getChests()[2]
-
-addVirtualItemToInventory({itemName = "braslet", itemCount = 500}, chest1, {})
-addVirtualItemToSlot({itemName = "braslet", itemCount = 30}, chest2, 5, {})
-for j = 1, #chest1 do
-	print(j.." "..tostring(chest1[j].itemName).."\t".. chest1[j].itemCount.."\t  \t\t\t\t"..tostring(chest2[j].itemName).."\t".. chest2[j].itemCount)
-end
-transferVirtualItemBetweenSlots(chest1, 1, chest2, 5, {})
-
-print()
-print()
-for j = 1, #chest1 do
-	print(j.." "..tostring(chest1[j].itemName).."\t".. chest1[j].itemCount.."\t   \t\t\t\t"..tostring(chest2[j].itemName).."\t".. chest2[j].itemCount)
-end
 
 -- craftableItem(itemName, itemCount)
 -- recipe(itemName, receivedCount, craftStationName, recipe(...(itemName, needCount)...), materials(...(itemName, needCount)...))
