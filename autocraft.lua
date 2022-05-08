@@ -220,7 +220,7 @@ function transferVirtualItemBetweenSlots(sourceSlot, sourceInventory, destinatio
 	local transferableItem = {itemName = sourceInventory[sourceSlot].itemName, itemCount = count or sourceInventory[sourceSlot].itemCount}
 	addVirtualItemToSlot(transferableItem, destinationInventory, destinationSlot, itemsStacks)
 	
-	deleteVirtualItemFromSlot(sourceInventory, sourceSlot, ((count or sourceInventory[sourceSlot].itemCount) - transferableItem.itemCount))
+	deleteVirtualItemFromSlot(sourceSlot, sourceInventory, ((count or sourceInventory[sourceSlot].itemCount) - transferableItem.itemCount))
 end
 
 function addVirtualItemToInventory(addableItem, inventory, itemsStacks)
