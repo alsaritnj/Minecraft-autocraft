@@ -217,7 +217,12 @@ function deleteVirtualItemFromSlot(slotToDelete, inventory, deleteCount)
 end
 
 function transferVirtualItemBetweenSlots(sourceSlot, sourceInventory, destinationSlot, destinationInventory, itemsStacks, count) -- untested
-	local transferableItem = {itemName = sourceInventory[sourceSlot].itemName, itemCount = count or sourceInventory[sourceSlot].itemCount}
+	local countOfItemsThatShouldBeTransferred = count or sourceInventory[sourceSlot].itemCount
+	if sourceInventory[sourceSlot].itemCount < countOfItemsThatShouldBeTransferred then
+		countOfItemsThatShouldBeTransferred = sourceInventory[sourceSlot].itemCount
+	end
+	
+	local transferableItem = {itemName = sourceInventory[sourceSlot].itemName, itemCount = countOfItemsThatShouldBeTransferred}
 	addVirtualItemToSlot(transferableItem, destinationInventory, destinationSlot, itemsStacks)
 	
 	deleteVirtualItemFromSlot(sourceSlot, sourceInventory, ((count or sourceInventory[sourceSlot].itemCount) - transferableItem.itemCount))
@@ -260,7 +265,7 @@ function transferVirtualItemBetweenInventories(transferableItem, sourceInventory
 	
 	while transferableItem.itemCount > 0 do
 		local slotFromWhichWeWillTransfer = findIf(sourceInventory, function(slot) return transferableItem.itemName == slot.itemName end)
-		local sloToWhichWeWillTransfer = findIf(sourceInventory, function(slot) return slot.itemCount == 0 or (slot.itemName == transferableItem.itemName and slot.itemCount < transferableItemStack) end)
+		local sloToWhichWeWillTransfer = findIf(destinationInventory, function(slot) return slot.itemCount == 0 or (slot.itemName == transferableItem.itemName and slot.itemCount < transferableItemStack) end)
 		
 		if not slotFromWhichWeWillTransfer or not sloToWhichWeWillTransfer then
 			break
@@ -269,7 +274,6 @@ function transferVirtualItemBetweenInventories(transferableItem, sourceInventory
 		local countOfItemsInSlotFromWhichWeWillTransferBeforeTransfer = sourceInventory[sloToWhichWeWillTransfer].itemCount
 		
 		transferVirtualItemBetweenSlots(slotFromWhichWeWillTransfer, sourceInventory, sloToWhichWeWillTransfer, destinationInventory, itemsStacks, transferableItem.itemCount)
-		
 		transferableItem.itemCount = transferableItem.itemCount - (countOfItemsInSlotFromWhichWeWillTransferBeforeTransfer - sourceInventory[slotFromWhichWeWillTransfer].itemCount)
 	end
 end
@@ -405,6 +409,25 @@ function main()
 end
 
 --main()
+
+ch1 = getChests()[1]
+ch2 = getChests()[2]
+
+addVirtualItemToInventory({itemName = "popcorn", itemCount = 40}, ch1, {})
+
+for i = 1, #ch1 do
+	print(i.." "..tostring(ch1[i].itemName).."\t".. ch1[i].itemCount.."\t\t\t"..tostring(ch2[i].itemName).."\t".. ch2[i].itemCount)
+end
+
+--transferVirtualItemBetweenInventories({itemName = "popcorn", itemCount = 170}, ch1, ch2, {})
+transferVirtualItemBetweenSlots(1, ch1, 1, ch2, {}, 50)
+
+print()
+print()
+
+for i = 1, #ch1 do
+	print(i.." "..tostring(ch1[i].itemName).."\t".. ch1[i].itemCount.."\t\t\t"..tostring(ch2[i].itemName).."\t".. ch2[i].itemCount)
+end
 
 
 -- craftableItem(itemName, itemCount)
