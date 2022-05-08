@@ -254,6 +254,26 @@ function deleteVirtualItemFromInventory(deletableItem, inventory)
 		end
 	end
 end
+
+function transferVirtualItemBetweenInventories(transferableItem, sourceInventory, destinationInventory, itemsStacks)
+	transferableItemStack = getItemStackSize(transferableItem.itemName, itemsStacks)
+	
+	while transferableItem.itemCount > 0 do
+		local slotFromWhichWeWillTransfer = findIf(sourceInventory, function(slot) return transferableItem.itemName == slot.itemName end)
+		local sloToWhichWeWillTransfer = findIf(sourceInventory, function(slot) return slot.itemCount == 0 or (slot.itemName == transferableItem.itemName and slot.itemCount < transferableItemStack) end)
+		
+		if not slotFromWhichWeWillTransfer or not sloToWhichWeWillTransfer then
+			break
+		end
+		
+		local countOfItemsInSlotFromWhichWeWillTransferBeforeTransfer = sourceInventory[sloToWhichWeWillTransfer].itemCount
+		
+		transferVirtualItemBetweenSlots(slotFromWhichWeWillTransfer, sourceInventory, sloToWhichWeWillTransfer, destinationInventory, itemsStacks, transferableItem.itemCount)
+		
+		transferableItem.itemCount = transferableItem.itemCount - (countOfItemsInSlotFromWhichWeWillTransferBeforeTransfer - sourceInventory[slotFromWhichWeWillTransfer].itemCount)
+	end
+end
+
 function pickUpMaterialsFromUser(needMaterials, chests, itemsStacks)
 	local currentChest = 1
 	local item
