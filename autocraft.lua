@@ -152,6 +152,7 @@ function getNeedItemsAndMaterialsAndRecipes(craftableItem, recipes)
 end
 
 
+
 function createEmptyInventory(size)
 	local inventory = {content = {}}
 	for i = 1, size do
@@ -351,6 +352,39 @@ function pickUpMaterialsFromUser(needMaterials, chests, itemsStacks)
 end
 
 
+
+function dropItemsIntoInventoryFollowingTheListOfVirtualInventoryChanges(side, changes, robot, inventoryController)
+	for i = 1, #changes do
+		robot.select(changes[i].sourceSlot)
+		inventoryController.dropIntoSlot(side, changes[i].destinationSlot, changes[i].itemCountChange)
+	end
+end
+
+function takeItemsFromInventoryFollowingTheListOfVirtualInventoryChanges(side, changes, robot, inventoryController)
+	for i = 1, #changes do
+		robot.select(changes[i].destinationSlot)
+		inventoryController.suckFromSlot(side, changes[i].sourceSlot, changes[i].itemCountChange)
+	end
+end
+
+function dropItemsIntoSlot(robotInventorySlot, robotInventory, destinationSlot, destinationInventory, itemsStacks, count, side, robot, inventoryController)
+	dropItemsIntoInventoryFollowingTheListOfVirtualInventoryChanges(side, {transferVirtualItemBetweenSlots(robotInventorySlot, robotInventory,  destinationSlot, destinationInventory, itemsStacks, count)}, robot, inventoryController)
+end
+
+function dropItemsIntoInventory(item, robotInventory, destinationInventory, itemsStacks, side, robot, inventoryController)
+	dropItemsIntoInventoryFollowingTheListOfVirtualInventoryChanges(side, transferVirtualItemBetweenInventories(item, robotInventory, destinationInventory, itemsStacks), robot, inventoryController)
+end
+
+function takeItemsFromSlot(robotInventorySlot, robotInventory, sourceSlot, sourceInventory, itemsStacks, count, side, robot, inventoryController)
+	takeItemsFromInventoryFollowingTheListOfVirtualInventoryChanges(side, {transferVirtualItemBetweenSlots(sourceSlot, sourceInventory, robotInventorySlot, robotInventory, itemsStacks, count)}, robot, inventoryController)
+end
+
+function takeItemsFromInventory(item, robotInventory, sourceInventory, itemsStacks, side, robot, inventoryController)
+	takeItemsFromInventoryFollowingTheListOfVirtualInventoryChanges(side, transferVirtualItemBetweenInventories(item, sourceInventory, robotInventory, itemsStacks), robot, inventoryController)
+end
+
+
+
 function craftItems(craftableItems, recipes, robotInventory, chests, itemsStacks, craftStations, robot, inventoryController)
 	for i = 1, #craftableItems do
 		craftableItems[i].needMaterials = calculateNeedMaterialsToCraftItem(craftableItems[i], recipes)
@@ -437,60 +471,7 @@ function main()
 
 end
 
---main()
-
-
-chest1 = getChests()[1]
-chest2 = getChests()[2]
-
-
-
-addVirtualItemToSlot({itemName = "a", itemCount = 64}, chest1, 1, {})
-addVirtualItemToSlot({itemName = "a", itemCount = 3}, chest1, 2, {})
-addVirtualItemToSlot({itemName = "b", itemCount = 32}, chest1, 3, {})
-addVirtualItemToSlot({itemName = "a", itemCount = 10}, chest1, 4, {})
-
-for j = 1, #chest1 do
-	print(j.." "..tostring(chest1[j].itemName).."\t".. chest1[j].itemCount.."\t    \t"..tostring(chest2[j].itemName).."\t".. chest2[j].itemCount)
-end
-
-print("ch1cont")
-for key, val in pairs(chest1.content)do
-	print(key.."\t"..val)
-end
-
-print("ch2cont")
-for key, val in pairs(chest2.content)do
-	print(key.."\t"..val)
-end
-
-print()
-print()
-
-ch = transferVirtualItemBetweenInventories({itemName = "a", itemCount = 69}, chest1, chest2, {})
-
-for i = 1, #ch do
-	print(ch[i].sourceSlot.."\t"..ch[i].destinationSlot.."\t"..ch[i].itemName.."\t"..ch[i].itemCountChange)
-end
-print()
-
-for j = 1, #chest1 do
-	print(j.." "..tostring(chest1[j].itemName).."\t".. chest1[j].itemCount.."\t    \t"..tostring(chest2[j].itemName).."\t".. chest2[j].itemCount)
-end
-
-print("ch1cont")
-for key, val in pairs(chest1.content)do
-	print(key.."\t"..val)
-end
-
-print("ch2cont")
-for key, val in pairs(chest2.content)do
-	print(key.."\t"..val)
-end
-
-
-print()
-
+main()
 
 
 -- craftableItem(itemName, itemCount)
