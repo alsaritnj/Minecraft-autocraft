@@ -99,20 +99,24 @@ function askUserAboutCreftableItem(recipe)
 	print("Write item name and quantity")
 	item = {}
 
-	::itemNameInput::
-	item["itemName"] = read();
-	if not findRecipe(item.itemName, recipe) then
-		print("There is no recipe for the item you enter")
-		goto itemNameInput
+	while true do
+		item["itemName"] = read();
+		if findRecipe(item.itemName, recipe) then
+			break;
+		else
+			print("There is no recipe for the item you enter")
+		end
 	end
 
-	::itemCountInput::
-	item["itemCount"] = tonumber(read());
-	if(item.itemCount < 1) then
-		print("The number of elements can't be less than one")
-		goto itemCountInput
+	while true do
+		item["itemCount"] = tonumber(read());
+		if item.itemCount > 0 then
+			break
+		else
+			print("The number of elements can't be less than one")
+		end
 	end
-	
+
 	return item;
 	
 end
@@ -435,7 +439,6 @@ end
 
 --main()
 
-print(123123123)
 
 chest1 = getChests()[1]
 chest2 = getChests()[2]
