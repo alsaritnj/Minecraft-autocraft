@@ -29,7 +29,7 @@ function getChests()-- shood take data from file
 		chests[i].y = 0
 		chests[i].z = 0
 	end
-	return chests	
+	return chests
 end
 
 function getItemStack()-- shood take data from file
@@ -77,17 +77,17 @@ end
 function calculateNeedMaterialsToCraftItem(craftableItem, recipes)
 	local needMaterials = {} -- (itemName, itemCount)
 	local craftableItemRecipe = findRecipe(craftableItem.itemName, recipes)
-	
+
 	if not craftableItemRecipe then
 		return nil -- по хорошему надо бросать эксцепшен
 	end
-	
+
 	for i = 1, #craftableItemRecipe.materials do
 		needMaterials[i] = {}
 		needMaterials[i].itemName = craftableItemRecipe.materials[i].itemName
 		needMaterials[i].itemCount = calculateNeedCountOfMaterialToCraftItem(craftableItem.itemCount, craftableItemRecipe.receivedCount, craftableItemRecipe.materials[i].needCount)
 	end
-	
+
 	return needMaterials
 end
 
@@ -118,7 +118,7 @@ function askUserAboutCreftableItem(recipe)
 	end
 
 	return item;
-	
+
 end
 
 function getNeedItemsAndMaterialsAndRecipes(craftableItem, recipes)
@@ -137,7 +137,7 @@ function getNeedItemsAndMaterialsAndRecipes(craftableItem, recipes)
 		for j = 1, #itemRecipe.materials do
 			local material = itemRecipe.materials[j]
 			local materialRecipe = recipes[findRecipe(material.itemName, recipes)]
-			
+
 			if materialRecipe then
 				equalEndItemAdd(needItems, {itemName = materialRecipe.itemName, itemCount = calculateNeedCountOfMaterialToCraftItem(needItems[i].itemCount, itemRecipe.receivedCount,  material.needCount)})-- needItems[i].itemCount * material.needCount / itemRecipe.receivedCount})
 				oneTimeItemAdd(needRecipes, materialRecipe)
@@ -169,17 +169,17 @@ end
 function addVirtualItemToSlot(addableItem, inventory, slotToAdd, itemsStacks)
 	if (inventory[slotToAdd].itemName == addableItem.itemName) or (not inventory[slotToAdd].itemName) then
 		local changes = {slot = slotToAdd, itemName = addableItem.itemName}
-		
+
 		inventory[slotToAdd].itemName = addableItem.itemName
 		local remainingSpaceInSlot = getItemStackSize(addableItem.itemName, itemsStacks) - inventory[slotToAdd].itemCount
-		
+
 		if addableItem.itemCount > remainingSpaceInSlot then-- the same code with the code that in "else", you shood fix this when you will refact this function
 			if inventory.content[addableItem.itemName] then
 				inventory.content[addableItem.itemName] = inventory.content[addableItem.itemName] + remainingSpaceInSlot
 			else
 				inventory.content[addableItem.itemName] = remainingSpaceInSlot
 			end
-			
+
 			inventory[slotToAdd].itemCount = inventory[slotToAdd].itemCount + remainingSpaceInSlot
 			changes.itemCountChange = remainingSpaceInSlot
 			addableItem.itemCount = addableItem.itemCount - remainingSpaceInSlot
@@ -189,12 +189,12 @@ function addVirtualItemToSlot(addableItem, inventory, slotToAdd, itemsStacks)
 			else
 				inventory.content[addableItem.itemName] = addableItem.itemCount
 			end
-			
+
 			inventory[slotToAdd].itemCount = inventory[slotToAdd].itemCount + addableItem.itemCount
 			changes.itemCountChange = addableItem.itemCount
 			addableItem.itemCount = 0
 		end
-		
+
 		return changes
 	end
 end
@@ -203,7 +203,7 @@ function deleteVirtualItemFromSlot(slotToDelete, inventory, deleteCount)
 	local nameOfDeletableItem = inventory[slotToDelete].itemName
 	if  nameOfDeletableItem then
 		local changes = {slot = slotToDelete, itemName = nameOfDeletableItem}
-		
+
 		if deleteCount and deleteCount <= inventory[slotToDelete].itemCount then
 			inventory[slotToDelete].itemCount = inventory[slotToDelete].itemCount - deleteCount
 			changes.itemCountChange = -deleteCount
@@ -213,7 +213,7 @@ function deleteVirtualItemFromSlot(slotToDelete, inventory, deleteCount)
 			changes.itemCountChange = -inventory[slotToDelete].itemCount
 			inventory[slotToDelete].itemCount = 0
 		end
-		
+
 		if inventory.content[nameOfDeletableItem] < 0 then-- if the function work right, than this "if" does't need. But I haven't make all tests yet...
 			exception("inposible(uncorrect function work):inventory.content[nameOfDeletableItem] < 0")
 		end
@@ -221,14 +221,14 @@ function deleteVirtualItemFromSlot(slotToDelete, inventory, deleteCount)
 			inventory[slotToDelete].itemName = nil
 			inventory[slotToDelete].itemCount = 0
 		end
-		
+
 		if inventory.content[nameOfDeletableItem] < 0 then-- if the function work right, than this "if" does't need.  But I haven't make all tests yet...
 			exception("inposible(uncorrect function work):inventory.content[nameOfDeletableItem] < 0")
 		end
 		if inventory.content[nameOfDeletableItem] == 0 then
 			inventory.content[nameOfDeletableItem] = nil
 		end
-		
+
 		return changes
 	end
 end
@@ -238,26 +238,26 @@ function transferVirtualItemBetweenSlots(sourceSlot, sourceInventory, destinatio
 	if sourceInventory[sourceSlot].itemCount < countOfItemsThatShouldBeTransferred then
 		countOfItemsThatShouldBeTransferred = sourceInventory[sourceSlot].itemCount
 	end
-	
+
 	local transferableItem = {itemName = sourceInventory[sourceSlot].itemName, itemCount = countOfItemsThatShouldBeTransferred}
 	local changes = {sourceSlot = sourceSlot, destinationSlot = destinationSlot, itemName = transferableItem.itemName}
 	changes.itemCountChange = addVirtualItemToSlot(transferableItem, destinationInventory, destinationSlot, itemsStacks).itemCountChange
 	deleteVirtualItemFromSlot(sourceSlot, sourceInventory, ((count or sourceInventory[sourceSlot].itemCount) - transferableItem.itemCount))
-	
+
 	return changes
 end
 
 function addVirtualItemToInventory(addableItem, inventory, itemsStacks)
 	local itemStackSize = getItemStackSize(addableItem.itemName, itemsStacks)
 	local changes = {}
-	
+
 	while addableItem.itemCount > 0 do
 		local slotToAddItem = findIf(inventory, function(slot) return slot.itemCount == 0 or (slot.itemName == addableItem.itemName and slot.itemCount < itemStackSize) end) -- ПО-ХУЙ -- unoptimised, but work :) LUA!!!
-		
+
 		if not slotToAddItem then
 			break;
 		end
-		
+
 		changes[#changes + 1] = addVirtualItemToSlot(addableItem, inventory, slotToAddItem, itemsStacks)
 	end
 
@@ -266,14 +266,14 @@ end
 
 function deleteVirtualItemFromInventory(deletableItem, inventory)
 	local changes = {}
-	
+
 	while deletableItem.itemCount > 0 do
 		local slotToDeleteItem = findIf(inventory, function(slot) return slot.itemName == deletableItem.itemName end)
-		
+
 		if not slotToDeleteItem then
 			break;
 		end
-		
+
 		if deletableItem.itemCount > inventory[slotToDeleteItem].itemCount then
 			deletableItem.itemCount = deletableItem.itemCount - inventory[slotToDeleteItem].itemCount
 			changes[#changes + 1] =  deleteVirtualItemFromSlot(slotToDeleteItem, inventory)
@@ -289,21 +289,21 @@ end
 function transferVirtualItemBetweenInventories(transferableItem, sourceInventory, destinationInventory, itemsStacks)
 	local transferableItemStack = getItemStackSize(transferableItem.itemName, itemsStacks)
 	local changes = {}
-	
+
 	while transferableItem.itemCount > 0 do
 		local slotFromWhichWeWillTransfer = findIf(sourceInventory, function(slot) return transferableItem.itemName == slot.itemName end)
 		local sloToWhichWeWillTransfer = findIf(destinationInventory, function(slot) return slot.itemCount == 0 or (slot.itemName == transferableItem.itemName and slot.itemCount < transferableItemStack) end)
-		
+
 		if not slotFromWhichWeWillTransfer or not sloToWhichWeWillTransfer then
 			break
 		end
-		
-		local countOfItemsInSlotFromWhichWeWillTransferBeforeTransfer = sourceInventory[sloToWhichWeWillTransfer].itemCount
-		
+
+		local countOfItemsInSlotFromWhichWeWillTransferBeforeTransfer = sourceInventory[slotFromWhichWeWillTransfer].itemCount
+
 		changes[#changes + 1] = transferVirtualItemBetweenSlots(slotFromWhichWeWillTransfer, sourceInventory, sloToWhichWeWillTransfer, destinationInventory, itemsStacks, transferableItem.itemCount)
 		transferableItem.itemCount = transferableItem.itemCount - (countOfItemsInSlotFromWhichWeWillTransferBeforeTransfer - sourceInventory[slotFromWhichWeWillTransfer].itemCount)
 	end
-	
+
 	return changes
 end
 
@@ -311,14 +311,14 @@ function pickUpMaterialsFromUser(needMaterials, chests, itemsStacks)
 	local currentChest = 1
 	local item
 	local i = 1
-	
+
 	while i <= #needMaterials do
 		if not item or item.itemCount == 0 then
 			item = {itemName = needMaterials[i].itemName, itemCount = needMaterials[i].itemCount} -- yes, that realy need, we can't place needMaterials[i] to addVirtualItemToInventory, becouse in this case needMaterials[i] will change
 		end
-		
+
 		addVirtualItemToInventory(item, chests[currentChest], itemsStacks)
-		
+
 		if not (item.itemCount == 0) then
 			currentChest = currentChest + 1
 			i = i - 1
@@ -326,10 +326,10 @@ function pickUpMaterialsFromUser(needMaterials, chests, itemsStacks)
 				exception()
 			end
 		end
-		
+
 		i = i + 1
 	end
-	
+
 	print("Put the next items into chests")
 	for i = 1, #needMaterials do
 		print(needMaterials[i].itemName.."\t"..needMaterials[i].itemCount)
@@ -345,7 +345,7 @@ function pickUpMaterialsFromUser(needMaterials, chests, itemsStacks)
 			end
 		end
 	end
-	
+
 	print("If you finish put items in chests, then press the enter")
 	read()
 end
@@ -355,32 +355,32 @@ function craftItems(craftableItems, recipes, robotInventory, chests, itemsStacks
 	for i = 1, #craftableItems do
 		craftableItems[i].needMaterials = calculateNeedMaterialsToCraftItem(craftableItems[i], recipes)
 	end
-	
+
 	local busyCraftStations = {}
-	
+
 	while #craftableItems > 0 do
 		local indexOfCraftableItem = #craftableItems
-		
+
 		while indexOfCraftableItem > 0 do
 			local craftableItem = craftableItems[indexOfCraftableItem]
 			local placesOfMaterialsInChests = findItemsInInventories(craftableItem.needMaterials, chests)
 			local craftableItemRecipe = findRecipe(craftableItem.itemName, recipes)
 			local craftStation = findCraftStation(craftableItemRecipe.craftStationName, craftStations)
-			
+
 			if placesOfMaterialsInChests and craftStation.getRemainingInputSpace(craftStation, craftableItem) > 0 then
 				craftStation.craft(craftStation, craftableItem, craftableItemRecipe, robot, inventoryController)
 				busyCraftStations[#busyCraftStations] = craftStation
-				
+
 				if craftableItem.itemCount == 0 then
 					table.remove(craftableItems, indexOfCraftableItem)
 				else
 					craftableItems[indexOfCraftableItem].itemCount = craftableItem.itemCount
 				end
-			
+
 			end
-			
+
 			indexOfCraftableItem = indexOfCraftableItem - 1
-			
+
 			if indexOfCraftableItem == 0 then
 				local i = 1
 				while i <= #busyCraftStations do
@@ -401,40 +401,40 @@ function main()
 	local recipes = getRecipes()
 	local craftableItem = askUserAboutCreftableItem(recipes);
 	local craftableItems, needMaterials, needRecipes = getNeedItemsAndMaterialsAndRecipes(craftableItem, recipes)
-	
+
 	local chests = getChests()
 	local robotInventory = getRobotInventory()
-	
+
 	pickUpMaterialsFromUser(needMaterials, chests, {})
 	--craftItems(craftableItems, recipes, robotInventory, chests, itemsStacks)
 	--for i = 1, #craftableItems do
 	--	print(craftableItems[i].itemName.." "..craftableItems[i].itemCount)
 	--end
-	
-	local craftStation = 
+
+	local craftStation =
 	{
 		craftStationName = "wire machine",
 		x = 1, y = 0, z = 0,
 		inventory,
 		getRemainingInputSpace = function(this, item)
-		
-		
+
+
 		end,
 		craft = function(this, craftableItem, craftableItemRecipe, robot, inventoryController)
-		
-		
+
+
 		end,
 		checkIfCraftIsOver = function(this, robot)
-		
-		
+
+
 		end,
 		unload = function(this, chests, robot, inventoryController)
-		
-		
+
+
 		end
 	}
-	
-	
+
+
 end
 
 --main()
@@ -467,7 +467,7 @@ end
 print()
 print()
 
-ch = transferVirtualItemBetweenInventories({itemName = "a", itemCount = 68}, chest1, chest2, {})
+ch = transferVirtualItemBetweenInventories({itemName = "a", itemCount = 69}, chest1, chest2, {})
 
 for i = 1, #ch do
 	print(ch[i].sourceSlot.."\t"..ch[i].destinationSlot.."\t"..ch[i].itemName.."\t"..ch[i].itemCountChange)
