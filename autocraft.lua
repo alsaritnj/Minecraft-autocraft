@@ -331,13 +331,13 @@ function deleteVirtualItemFromInventory(deletableItem, inventory)
 	return changes
 end
 
-function transferVirtualItemBetweenInventories(transferableItem, sourceInventory, destinationInventory, itemsStacks)
+function transferVirtualItemBetweenInventories(transferableItem, sourceInventory, destinationInventory, itemsStacks, destinationSlot)-- destinationSlot is crutch. this thing shood be tested
 	local transferableItemStack = getItemStackSize(transferableItem.itemName, itemsStacks)
 	local changes = {}
 
 	while transferableItem.itemCount > 0 do
 		local slotFromWhichWeWillTransfer = findIf(sourceInventory, function(slot) return transferableItem.itemName == slot.itemName end)
-		local sloToWhichWeWillTransfer = findIf(destinationInventory, function(slot) return slot.itemCount == 0 or (slot.itemName == transferableItem.itemName and slot.itemCount < transferableItemStack) end)
+		local sloToWhichWeWillTransfer = destinationSlot or findIf(destinationInventory, function(slot) return slot.itemCount == 0 or (slot.itemName == transferableItem.itemName and slot.itemCount < transferableItemStack) end)
 
 		if not slotFromWhichWeWillTransfer or not sloToWhichWeWillTransfer then
 			break
@@ -435,11 +435,30 @@ function findInventoriesThatContainMaterials(inventories, materials)
 			if checkIfInventoryConsistItems({{itemName = materials[j].itemName, itemCount = 1}}, {inventories[i]}) then
 				inventoriesThatContainMaterials[i][materials[j].itemName] = inventories[i].content[materials[j].itemName]
 			end
-			
+
 		end
 	end
 
 	return inventoriesThatContainMaterials
+end
+
+function getCountOfItemsThatCanBeCraftedFromMaterialsFromStorages(recipe, storages)
+	local countOfItemsThatCanBeCraftedFromMaterialsFromStorages
+
+	for i = 1, #recipe.materials do
+		local countOfMeterialInStorages = 0
+		for j = 1, #storages do
+			countOfMeterialInStorages = countOfMeterialInStorages + (storages[j].content[recipe.materials[i].itemName] or 0)
+		end
+
+		if not countOfItemsThatCanBeCraftedFromMaterialsFromStorages then
+			countOfItemsThatCanBeCraftedFromMaterialsFromStorages = math.floor(countOfMeterialInStorages / recipe.materials[i].itemCount)
+		else
+			countOfItemsThatCanBeCraftedFromMaterialsFromStorages = min(countOfItemsThatCanBeCraftedFromMaterialsFromStorages, math.floor(countOfMeterialInStorages / recipe.materials[i].itemCount))
+		end
+	end
+
+	return countOfItemsThatCanBeCraftedFromMaterialsFromStorages
 end
 
 function pickUpMaterialsFromUser(needMaterials, chests, itemsStacks)
@@ -579,17 +598,17 @@ function takeItemsFromSlot(robotInventorySlot, robotInventory, sourceSlot, sourc
 	takeItemsFromInventoryFollowingTheListOfVirtualInventoryChanges(side, {transferVirtualItemBetweenSlots(sourceSlot, sourceInventory, robotInventorySlot, robotInventory, itemsStacks, count)}, robot, inventoryController)
 end
 
-function takeItemsFromInventory(items, robotInventory, sourceInventory, itemsStacks, side, robot, inventoryController)
-	takeItemsFromInventoryFollowingTheListOfVirtualInventoryChanges(side, transferVirtualItemBetweenInventories(items, sourceInventory, robotInventory, itemsStacks), robot, inventoryController)
+function takeItemsFromInventory(items, robotInventory, sourceInventory, itemsStacks, side, robot, inventoryController, destinationSlot)
+	takeItemsFromInventoryFollowingTheListOfVirtualInventoryChanges(side, transferVirtualItemBetweenInventories(items, sourceInventory, robotInventory, itemsStacks, destinationSlot), robot, inventoryController)
 end
 
-function takeItemsFromStorage(items, robotInventory, sourceStorage, itemsStacks, robot, inventoryController)
+function takeItemsFromStorage(items, robotInventory, sourceStorage, itemsStacks, robot, inventoryController, destinationSlot)
 	standFaceBlock(sourceStorage, robot)
 	local side = sides.front
 	if robot.face == sides.front then
 		side = sides.bottom
 	end
-	takeItemsFromInventory(items, robotInventory, sourceStorage, itemsStacks, side, robot, inventoryController)
+	takeItemsFromInventory(items, robotInventory, sourceStorage, itemsStacks, side, robot, inventoryController, destinationSlot)
 end
 
 function dropItemsIntoStorage(items, robotInventory, destinationStorage, itemsStacks, robot, inventoryController)
@@ -601,7 +620,21 @@ function dropItemsIntoStorage(items, robotInventory, destinationStorage, itemsSt
 	dropItemsIntoInventory(items, robotInventory, destinationStorage, itemsStacks, side, robot, inventoryController)
 end
 
-function transferItems(itemsToTransfer, sourceStorages, destinationStorages, robotInventory, itemsStacks, robot, inventoryController)
+function unloadRobotInventory(robotInventory, destinationStorages, itemsStacks, robot, inventoryController) -- to test
+	local currentStorage = 1
+	while not inventoryIsEmpty(robotInventory) do
+		for key, val in pairs(robotInventory.content) do
+			dropItemsIntoStorage({itemName = key, itemCount = val}, robotInventory, destinationStorages[currentStorage], itemsStacks, robot, inventoryController)
+		end
+
+		currentStorage = currentStorage + 1
+		if currentStorage > #destinationStorages then
+			exception("There is not enought space in the storages")
+		end
+	end
+end
+
+function transferItems(itemsToTransfer, sourceStorages, destinationStorages, robotInventory, itemsStacks, robot, inventoryController) -- to test ('couse unloadRobotInventory())
 	local j = 1
 	local jShoodBeIncremented
 
@@ -618,13 +651,7 @@ function transferItems(itemsToTransfer, sourceStorages, destinationStorages, rob
 			end
 
 			if robotInventory[#robotInventory].itemName then
-				local currentStorage = 1
-				while not inventoryIsEmpty(robotInventory) and currentStorage <= #destinationStorages do
-					for key, val in pairs(robotInventory.content) do
-						dropItemsIntoStorage({itemName = key, itemCount = val}, robotInventory, destinationStorages[currentStorage], itemsStacks, robot, inventoryController)
-					end
-					currentStorage = currentStorage + 1
-				end
+				unloadRobotInventory(robotInventory, destinationStorages, itemsStacks, robot, inventoryController)
 				jShoodBeIncremented = false
 			end
 
@@ -638,16 +665,7 @@ function transferItems(itemsToTransfer, sourceStorages, destinationStorages, rob
 		end
 	end
 	if not inventoryIsEmpty(robotInventory) then
-		local currentStorage = 1
-		while (not inventoryIsEmpty(robotInventory)) and currentStorage <= #destinationStorages do
-			for key, val in pairs(robotInventory.content) do
-				dropItemsIntoStorage({itemName = key, itemCount = val}, robotInventory, destinationStorages[currentStorage], itemsStacks, robot, inventoryController)
-			end
-			currentStorage = currentStorage + 1
-		end
-		if not inventoryIsEmpty(robotInventory) then
-			exception("There is not enought space for items")
-		end
+		unloadRobotInventory(robotInventory, destinationStorages, itemsStacks, robot, inventoryController)
 	end
 end
 
@@ -733,9 +751,9 @@ magicCraftStation =
 		inputSlotNumber = 7,
 		outputSlotNumber = 2,
 
-		construct = function(this)
+		construct = function()
 			magicCraftStation.content = {}
-			for i = 1, this.inputSlotNumber do
+			for i = 1, magicCraftStation.inputSlotNumber do
 				magicCraftStation[i] = {itemCount = 0}
 				if (i ~= magicCraftStation.inputSlotNumber) and (i ~= magicCraftStation.outputSlotNumber) then
 					addVirtualItemToSlot({itemName = "kostil", itemCount = 64}, magicCraftStation, i, {})
@@ -816,38 +834,40 @@ magicCraftStation =
 		end
 }
 
-magicCraftStation.construct(magicCraftStation)
+magicCraftStation.construct()
 
 
-workbench =
+workbenchInRobotInvenoryWithSizeOfRobotInventoryEqual4 =
 {
 		craftStationName = "workbench",
 
 		isWorkingNow = function(this)
 			return false -- return false constantly becouse workbench finish craft in function "craft"
-		end,
-
-		unload = function(this, storages, robotInventory, itemsStacks, robot, inventoryController) -- todo
-
-		end,
+		end,		
 
 		craft = function(this, craftableItem, craftableItemRecipe, storages, robotInventory, itemsStacks, robot, inventoryController, crafting)
-			local storagesThatContainMaterials = findInventoriesThatContainMaterials(storages, craftableItemRecipe.materials)
-			local maxCountOfItemsThatCanBeCrafted, maxCountOfMaterialsPerOneCraft  = this.calculateMaxCountOfMaterialsPerOneCraft(this, craftableItem, craftableItemRecipe, itemsStacks)
-			local needMaterials = calculateNeedMaterialsToCraftItem(maxCountOfItemsThatCanBeCrafted, craftableItemRecipe)
+			local maxCountOfItemsThatCanBeCraftedPerOneCraft, maxCountOfMaterialsPerOneCraft  = this.calculateMaxCountOfMaterialsPerOneCraft(this, craftableItem, craftableItemRecipe, itemsStacks)
+			--local needMaterials = calculateNeedMaterialsToCraftItem(maxCountOfItemsThatCanBeCraftedPerOneCraft, craftableItemRecipe)
+			local maxCountOfItemsThatCanBeCrafted = min(craftableItem.itemCount, getCountOfItemsThatCanBeCraftedFromMaterialsFromStorages(craftableItemRecipe, storages))
 
-			while craftableItem.itemCount >= craftableItemRecipe.receivedCount and this.enoughMaterials(storagesThatContainMaterials, needMaterials) do
-				if craftableItem.itemCount < maxCountOfItemsThatCanBeCrafted then
-					maxCountOfItemsThatCanBeCrafted, maxCountOfMaterialsPerOneCraft = this.calculateMaxCountOfMaterialsPerOneCraft(this, craftableItem, craftableItemRecipe, itemsStacks)
-					needMaterials = calculateNeedMaterialsToCraftItem(maxCountOfItemsThatCanBeCrafted, craftableItemRecipe)
+			craftableItem.itemCount = craftableItem.itemCount - maxCountOfItemsThatCanBeCrafted
+
+			if maxCountOfItemsThatCanBeCrafted < craftableItemRecipe.receivedCount and not maxCountOfItemsThatCanBeCrafted == 0 then -- this shood be deleted after test
+				exception("workbench.craft() maxCountOfItemsThatCanBeCrafted < craftableItemRecipe.receivedCount and not maxCountOfItemsThatCanBeCrafted == 0")
+			end
+
+			while maxCountOfItemsThatCanBeCrafted >= craftableItemRecipe.receivedCount do
+				if maxCountOfItemsThatCanBeCrafted < maxCountOfItemsThatCanBeCraftedPerOneCraft then
+					maxCountOfItemsThatCanBeCraftedPerOneCraft, maxCountOfMaterialsPerOneCraft = this.calculateMaxCountOfMaterialsPerOneCraft(this, {itemName = craftableItem.itemName, itemCount = maxCountOfItemsThatCanBeCrafted}, craftableItemRecipe, itemsStacks)
+					--needMaterials = calculateNeedMaterialsToCraftItem(maxCountOfItemsThatCanBeCraftedPerOneCraft, craftableItemRecipe)
 				end
 
-				this.load(...)--
+				this.load(this, craftableItemRecipe, maxCountOfMaterialsPerOneCraft, storages, robotInventory, itemsStacks, robot, inventoryController)
 				crafting.craft()
-				this.createRecordThatItemWasCrafted(this,...)--
-				this.unload(this, storages, robotInventory, itemsStacks, robot, inventoryController, crafting)--
+				this.createRecordThatItemWasCrafted(this,...) -- the function removes items from the craft grid and adds a craft result to the first slot
+				this.unload(this, storages, robotInventory, itemsStacks, robot, inventoryController, crafting)
 
-				craftableItem.itemCount = craftableItem.itemCount - maxCountOfItemsThatCanBeCrafted
+				maxCountOfItemsThatCanBeCrafted = maxCountOfItemsThatCanBeCrafted - maxCountOfItemsThatCanBeCraftedPerOneCraft
 			end
 		end,
 
@@ -887,33 +907,39 @@ workbench =
 			return maxCountOfItemsThatCanBeCrafted, maxCountOfMaterialsPerOneCraft
 		end,
 
-		enoughMaterials = function(inventoriesThatContainMaterials, needMaterials)
-			local notFindedMaterials = {}
-			for i = 1, #needMaterials do
-				notFindedMaterials[needMaterials[i].itemName] = needMaterials[i].needCount
+		load = function(this, recipe, maxCountOfMaterialsPerOneCraft, storages, robotInventory, itemsStacks, robot, inventoryController) -- to test
+			local notTakenMaterials = {}
+			for i = 1, #recipe.recipe do
+				if recipe.recipe[i] then
+					notTakenMaterials[i] = {itemName = recipe.recipe[i].itemName, itemCount = maxCountOfMaterialsPerOneCraft} -- "itemCount = maxCountOfMaterialsPerOneCraft" becouse workbench on one craft use one pice of eqch material
+				end
 			end
 
-			for i = 1, #inventoriesThatContainMaterials do
-				for key, val in pairs(notFindedMaterials) do
-					if inventoriesThatContainMaterials[i][key] then
-						notFindedMaterials[key] = notFindedMaterials[key] - val
-						if notFindedMaterials[key] <= 0 then
-							notFindedMaterials[key] = nil
-						end
+			for i = 1, #storages do
+				for j = 1, #notTakenMaterials do
+					if notTakenMaterials[j] and checkIfInventoryConsistItems({notTakenMaterials[j]}, {storages[i]}) then
+						takeItemsFromStorage(notTakenMaterials[j], robotInventory, storages[i], itemsStacks, robot, inventoryController, j)
 					end
 				end
 			end
 		end,
 
-		load = function(this, recipe, maxCountOfMaterialsPerOneCraft, storages, storagesThatContainMaterials, robotInventory, itemsStacks, robot, inventoryController)
-			local notTakenMaterials = {}
-			for i = 1, #needMaterials do
-				notTakenMaterials[needMaterials[i].itemName] = needMaterials[i].needCount
+		unload = function(this, storages, robotInventory, itemsStacks, robot, inventoryController) -- to test
+			unloadRobotInventory(robotInventory, storages, itemsStacks, robot, inventoryController)
+		end,
+
+		createRecordThatItemWasCrafted = function(this, craftableItemRecipe, maxCountOfItemsThatCanBeCraftedPerOneCraft, robotInventory, itemsStacks) -- to test
+				for column = 1, 3 do
+					deleteVirtualItemFromSlot(row * 4 + column, robotInventory) -- 4 is MAGIC NUMBER, it is the lenghts of the inventory side
+				end
 			end
 
-			
+			addVirtualItemToInventory({itemName = craftableItemRecipe.itemName, itemCount = maxCountOfItemsThatCanBeCraftedPerOneCraft}, robotInventory, itemsStacks)
 		end
 }
+
+
+
 
 exit()
 
