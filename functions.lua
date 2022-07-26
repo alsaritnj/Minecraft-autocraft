@@ -1,14 +1,3 @@
-function read()
-	return io.read()
-end
-
-os =
-{
-	sleep = function(timeout)
-		print("Sleep for "..timeout.." seconds")
-	end
-}
-
 sides = require("sides")
 
 function getRecipes()
@@ -33,21 +22,18 @@ function getInventoryController()
 end
 
 function getCrafting()
-	return require("component").crafting
+	return require("component").crafting 
 end
 
-function getStorages()
-	local map = require("storages")
-	local storages = {}
-
-	for i = 1, #map do
-		storages[i] = createEmptyInventory(map[i].size)
-		storages[i].x = map[i].x
-		storages[i].y = map[i].y
-		storages[i].z = map[i].z
+function getChests()-- shood take data from file
+	local chests = {}
+	for i = 1, chestsCount do
+		chests[i] = createEmptyInventory(chestSize)
+		chests[i].x = 0
+		chests[i].y = 0
+		chests[i].z = 0
 	end
-
-	return storages
+	return chests
 end
 
 function getCraftStations()
@@ -695,7 +681,7 @@ function craftItems(craftableItems, recipes, storages, craftStations, robotInven
 			indexOfCraftableItem = indexOfCraftableItem - 1
 		end
 
-		os.sleep(require("settings").craftStationsUnloadCooldown)
+		os.sleep(10)
 
 		for i = 1, #craftStations do
 			if craftStations[i].isWorkingNow(craftStations[i]) and craftStations[i].checkIfCraftIsOver(craftStations[i], robot, inventoryController) then
@@ -717,66 +703,6 @@ function craftItems(craftableItems, recipes, storages, craftStations, robotInven
 			end
 		end
 
-		os.sleep(require("settings").craftStationsUnloadCooldown)
+		os.sleep(10)
 	end
 end
-
-
-function main()
-	local recipes = getRecipes()
-	local itemsStacks = getItemsStacks()
-
-	local craftStations = getCraftStations()
-	local storages = getStorages()
-
-	local robotInventory = getRobotInventory()
-	local robot = getRobot()
-	local inventoryController = getInventoryController()
-	local crafting = getCrafting()
-
-
-
-	local craftableItem = askUserAboutCreftableItem(recipes)
-	local craftableItems, needMaterials, needRecipes = getNeedItemsAndMaterialsAndRecipes(craftableItem, recipes)
-	pickUpMaterialsFromUser(needMaterials, storages, {})
-
-
-	craftItems(craftableItems, needRecipes, storages, craftStations, robotInventory, itemsStacks, robot, inventoryController, crafting)
-end
-
-main()
-
-
-
-
-
-
---[[
-chests = {getChests()[1]}
-
-addVirtualItemToInventory({itemName = "copper ingot", itemCount = 1}, chests[1], {})
-
-robot = getRobot()
-robotInventory = getRobotInventory()
-inventoryController = getInventoryController()
-
-items = {{itemName = "copper wire", itemCount = 3}}
-
-craftItems(items, getRecipes(), robotInventory, chests, {magicCraftStation}, robotInventory, {}, robot, inventoryController)
-
-goTo({x = 0, y = 0, z = 0}, robott)
-]]
--- craftableItem(itemName, itemCount)
--- recipe(itemName, receivedCount, craftStationName, recipe(...(itemName, needCount)...), materials(...(itemName, needCount)...))
--- itemsStacks(itemName = itemStackSize)
--- inventory(..(itemName, itemCount).., content(..(itemName = itemCount)..))
--- cords(x, y, z)
-
--- craftStation
---(
---	craftStationName,
---	craft = function(this, craftableItem, craftableItemRecipe, itemsStacks, storages, robot, inventoryController, ),
---	checkIfCraftIsOver = function(this, robot, inventoryController): bool,
---	isWorkingNow = (function(this): bool),
---	unload = function(this, storages, robot, inventoryController)
---)
