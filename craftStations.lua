@@ -26,6 +26,7 @@ return
 					end
 
 					this.load(this, craftableItemRecipe, maxCountOfMaterialsPerOneCraft, storages, robotInventory, itemsStacks, robot, inventoryController)
+					robot.select(4)
 					crafting.craft()
 					this.createRecordThatItemWasCrafted(this, craftableItemRecipe, maxCountOfItemsThatCanBeCraftedPerOneCraft, robotInventory, itemsStacks)
 					this.unload(this, storages, robotInventory, itemsStacks, robot, inventoryController, crafting)
@@ -39,24 +40,8 @@ return
 			end,
 
 			calculateMaxCountOfMaterialsPerOneCraft = function(this, item, craftableItemRecipe, itemsStacks)
-				local maxCountOfItemsThatCanBeCrafted
-
-				local firstEmptySlotInCraft = findIf(craftableItemRecipe.recipe, function(el) return not el end)
-				if (firstEmptySlotInCraft and (firstEmptySlotInCraft >= 1 and firstEmptySlotInCraft <= 3)) or (#craftableItemRecipe.recipe < 3) then
-					maxCountOfItemsThatCanBeCrafted = craftableItemRecipe.receivedCount
-				else
-					maxCountOfItemsThatCanBeCrafted = craftableItemRecipe.receivedCount * (math.floor(getItemStackSize(item.itemName, itemsStacks) / craftableItemRecipe.receivedCount))
-				end
-
+				local maxCountOfItemsThatCanBeCrafted = craftableItemRecipe.receivedCount * (math.floor(getItemStackSize(item.itemName, itemsStacks) / craftableItemRecipe.receivedCount))
 				maxCountOfItemsThatCanBeCrafted = min(maxCountOfItemsThatCanBeCrafted, item.itemCount)
-
-				for i = 1, #craftableItemRecipe.recipe do
-					if craftableItemRecipe.recipe[i] then
-						if calculateNeedCountOfMaterialToCraftItem(maxCountOfItemsThatCanBeCrafted, craftableItemRecipe.receivedCount, craftableItemRecipe.recipe[i].needCount) > getItemStackSize(craftableItemRecipe.recipe[i].itemName, itemsStacks) then
-							maxCountOfItemsThatCanBeCrafted = getItemStackSize(craftableItemRecipe.recipe[i].itemName, itemsStacks) * craftableItemRecipe.receivedCount /  craftableItemRecipe.recipe[i].needCount
-						end
-					end
-				end
 
 				return maxCountOfItemsThatCanBeCrafted, calculateNeedCountOfMaterialToCraftItem(maxCountOfItemsThatCanBeCrafted, craftableItemRecipe.receivedCount, 1)
 			end,
@@ -95,7 +80,7 @@ return
 						deleteVirtualItemFromSlot(row * 4 + column, robotInventory) -- 4 is MAGIC NUMBER, it is the lenghts of the inventory side
 					end
 				end
-				addVirtualItemToInventory({itemName = craftableItemRecipe.itemName, itemCount = maxCountOfItemsThatCanBeCraftedPerOneCraft}, robotInventory, itemsStacks)
+				--to remake addVirtualItemToInventory({itemName = craftableItemRecipe.itemName, itemCount = maxCountOfItemsThatCanBeCraftedPerOneCraft}, robotInventory, itemsStacks)
 			end
 	},
 
@@ -105,6 +90,3 @@ return
 
     craftStationWithOneInputAndOneOutput:construct("compressor", 3, -1, 0, 7, 2)
 }
-
-
-

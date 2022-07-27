@@ -557,14 +557,17 @@ function changeFace(robot, side)
 end
 
 function goTo(block, robot)
-	changeFace(robot, sides.front)
-	moveByOneDirection(block, robot, "x", robot.forward, robot.back)
+	if robot.x ~= block.x then
+		changeFace(robot, sides.front)
+		moveByOneDirection(block, robot, "x", robot.forward, robot.back)
+	end
 end
 
 function standFaceBlock(block, robot)
 	goTo(block, robot)
 
 	local z = block.z - robot.z
+
 	if z < 0 then
 		changeFace(robot, sides.left)
 	elseif z > 0 then
@@ -606,6 +609,7 @@ end
 
 function takeItemsFromStorage(items, robotInventory, sourceStorage, itemsStacks, robot, inventoryController, destinationSlot)
 	standFaceBlock(sourceStorage, robot)
+
 	local side = sides.front
 	if robot.face == sides.front then
 		side = sides.bottom
