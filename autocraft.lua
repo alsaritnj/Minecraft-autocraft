@@ -300,7 +300,7 @@ function addVirtualItemToInventory(addableItem, inventory, itemsStacks)
 	local changes = {}
 
 	while addableItem.itemCount > 0 do
-		local slotToAddItem = findIf(inventory, function(slot) return slot.itemCount == 0 or (slot.itemName == addableItem.itemName and slot.itemCount < itemStackSize) end) -- ПО-ХУЙ -- unoptimised, but work :) LUA!!!
+		local slotToAddItem = findIf(inventory, function(slot) return slot.itemCount == 0 or (slot.itemName == addableItem.itemName and slot.itemCount < itemStackSize) end) -- РџРћ-РҐРЈР™ -- unoptimised, but work :) LUA!!!
 
 		if not slotToAddItem then
 			break;
@@ -746,6 +746,9 @@ function main()
 
 
 	craftItems(craftableItems, needRecipes, storages, craftStations, robotInventory, itemsStacks, robot, inventoryController, crafting)
+
+	goTo({x = 0, y = 0, z = 0}, robot)
+	changeFace(robot, sides.front)
 end
 
 main()
