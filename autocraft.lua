@@ -171,8 +171,8 @@ function getNeedItemsAndMaterialsAndRecipes(craftableItem, recipes)
 
 	needItems[1] = craftableItem
 
-	local i = 1
-	while i <= #needItems do
+	
+	for i = 1, #needItems do
 		local itemRecipe = recipes[findRecipe(needItems[i].itemName, recipes)]
 		oneTimeItemAdd(needRecipes, itemRecipe)
 		for j = 1, #itemRecipe.materials do
@@ -180,15 +180,27 @@ function getNeedItemsAndMaterialsAndRecipes(craftableItem, recipes)
 			local materialRecipe = recipes[findRecipe(material.itemName, recipes)]
 
 			if materialRecipe then
-				equalEndItemAdd(needItems, {itemName = materialRecipe.itemName, itemCount = calculateNeedCountOfMaterialToCraftItem(needItems[i].itemCount, itemRecipe.receivedCount,  material.needCount)})-- needItems[i].itemCount * material.needCount / itemRecipe.receivedCount})
+				equalEndItemAdd(needItems, {itemName = materialRecipe.itemName, itemCount = calculateNeedCountOfMaterialToCraftItem(needItems[i].itemCount, itemRecipe.receivedCount,  material.needCount)})
 				oneTimeItemAdd(needRecipes, materialRecipe)
-			else
-				equalItemAdd(needMaterials, {itemName = material.itemName, itemCount = calculateNeedCountOfMaterialToCraftItem(needItems[i].itemCount, itemRecipe.receivedCount, material.needCount)})-- needItems[i].itemCount * material.needCount / itemRecipe.receivedCount})
 			end
 		end
 
-		i = i + 1
 	end
+
+	for i = 1, #needItems do
+		local itemRecipe = needRecipes[findRecipe(needItems[i].itemName, needRecipes)]
+		needItems[i].itemCount = itemRecipe.receivedCount * math.ceil(needItems[i].itemCount / itemRecipe.receivedCount)
+		
+		for j = 1, #itemRecipe.materials do
+			local material = itemRecipe.materials[j]
+			local materialRecipe = needRecipes[findRecipe(material.itemName, needRecipes)]
+
+			if not materialRecipe then
+				equalItemAdd(needMaterials, {itemName = material.itemName, itemCount = calculateNeedCountOfMaterialToCraftItem(needItems[i].itemCount, itemRecipe.receivedCount, material.needCount)})
+			end
+		end
+	end
+
 	return needItems, needMaterials, needRecipes
 end
 
@@ -300,7 +312,7 @@ function addVirtualItemToInventory(addableItem, inventory, itemsStacks)
 	local changes = {}
 
 	while addableItem.itemCount > 0 do
-		local slotToAddItem = findIf(inventory, function(slot) return slot.itemCount == 0 or (slot.itemName == addableItem.itemName and slot.itemCount < itemStackSize) end) -- РџРћ-РҐРЈР™ -- unoptimised, but work :) LUA!!!
+		local slotToAddItem = findIf(inventory, function(slot) return slot.itemCount == 0 or (slot.itemName == addableItem.itemName and slot.itemCount < itemStackSize) end) -- ПО-ХУЙ -- unoptimised, but work :) LUA!!!
 
 		if not slotToAddItem then
 			break;
