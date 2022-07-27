@@ -5,7 +5,7 @@ local workbenchRecipes =
         receivedCount = 1, craftStationName = "workbench",
         recipe = 
         {
-            {itemName = "copper wire", needCount = 1}, {itemName = "rubber", needCount = 1}
+            {itemName = "copper wire", needCount = 1}, {itemName = "rudder", needCount = 1}
         },
         materials = 
         {
