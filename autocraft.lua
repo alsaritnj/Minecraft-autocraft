@@ -1,7 +1,3 @@
-function read()
-	return io.read()
-end
-
 os =
 {
 	sleep = function(timeout)
@@ -10,6 +6,10 @@ os =
 }
 
 sides = require("sides")
+
+function read()
+	return io.read()
+end
 
 function getRecipes()
 	return require("recipes")
@@ -498,23 +498,25 @@ function pickUpMaterialsFromUser(needMaterials, chests, itemsStacks)
 		i = i + 1
 	end
 
-	print("Put the next items into chests")
+	print("Put next items into the chests")
 	for i = 1, #needMaterials do
-		print(needMaterials[i].itemName.."\t"..needMaterials[i].itemCount)
+		print(needMaterials[i].itemName.."\t"..needMaterials[i].itemCount.."\t("..needMaterials[i].itemCount // getItemStackSize(needMaterials[i].itemName, itemsStacks).." and "..needMaterials[i].itemCount % getItemStackSize(needMaterials[i].itemName, itemsStacks)..")")
 	end
 
-	print("Do you want to see how items shood lay in chests?(Y/N)")
+	print("Do you want to see how items shood lay in the chests?(Y/N)")
 	local input = read()
 	if input == "y" or input == "Y" then
 		for i = 1, #chests do
 			print("Chest "..i)
 			for j = 1, #chests[i] do
-				print(j.." "..tostring(chests[i][j].itemName).."\t".. chests[i][j].itemCount)
+				if chests[i][j].itemName then
+					print(j.." "..tostring(chests[i][j].itemName).."\t".. chests[i][j].itemCount)
+				end
 			end
 		end
 	end
 
-	print("If you finish put items in chests, then press the enter")
+	print("Press enter if you finish put items in the chests")
 	read()
 end
 
