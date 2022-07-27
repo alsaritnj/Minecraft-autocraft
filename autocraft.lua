@@ -171,8 +171,8 @@ function getNeedItemsAndMaterialsAndRecipes(craftableItem, recipes)
 
 	needItems[1] = craftableItem
 
-	
-	for i = 1, #needItems do
+	local i = 1
+	while i <= #needItems do
 		local itemRecipe = recipes[findRecipe(needItems[i].itemName, recipes)]
 		oneTimeItemAdd(needRecipes, itemRecipe)
 		for j = 1, #itemRecipe.materials do
@@ -184,7 +184,8 @@ function getNeedItemsAndMaterialsAndRecipes(craftableItem, recipes)
 				oneTimeItemAdd(needRecipes, materialRecipe)
 			end
 		end
-
+		
+		i = i + 1
 	end
 
 	for i = 1, #needItems do
@@ -500,7 +501,7 @@ function pickUpMaterialsFromUser(needMaterials, chests, itemsStacks)
 
 	print("Put next items into the chests")
 	for i = 1, #needMaterials do
-		print(needMaterials[i].itemName.."\t"..needMaterials[i].itemCount.."\t("..needMaterials[i].itemCount // getItemStackSize(needMaterials[i].itemName, itemsStacks).." and "..needMaterials[i].itemCount % getItemStackSize(needMaterials[i].itemName, itemsStacks)..")")
+		print(needMaterials[i].itemName.."\t"..needMaterials[i].itemCount.."\t("..math.floor(needMaterials[i].itemCount / getItemStackSize(needMaterials[i].itemName, itemsStacks)).." and "..needMaterials[i].itemCount % getItemStackSize(needMaterials[i].itemName, itemsStacks)..")")
 	end
 
 	print("Do you want to see how items shood lay in the chests?(Y/N)")
