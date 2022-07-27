@@ -58,11 +58,13 @@ return
 					for j, v in pairs(notTakenMaterials) do						
 						if notTakenMaterials[j] and checkIfInventoryConsistItems({v}, {storages[i]}) then
 							local slot = j
-							if slot > 3 then
-								slot = slot + 1
-							elseif slot > 6 then
+							if slot > 6 then
 								slot = slot + 1
 							end
+							if slot > 3 then
+								slot = slot + 1
+							end
+							
 
 							takeItemsFromStorage(v, robotInventory, storages[i], itemsStacks, robot, inventoryController, slot)
 						end
