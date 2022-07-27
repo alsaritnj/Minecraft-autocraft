@@ -80,7 +80,7 @@ return
 						deleteVirtualItemFromSlot(row * 4 + column, robotInventory) -- 4 is MAGIC NUMBER, it is the lenghts of the inventory side
 					end
 				end
-				--to remake addVirtualItemToInventory({itemName = craftableItemRecipe.itemName, itemCount = maxCountOfItemsThatCanBeCraftedPerOneCraft}, robotInventory, itemsStacks)
+				addVirtualItemToSlot({itemName = craftableItemRecipe.itemName, itemCount = maxCountOfItemsThatCanBeCraftedPerOneCraft}, robotInventory, 5, itemsStacks)
 			end
 	},
 
