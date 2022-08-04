@@ -155,7 +155,8 @@ function askUserAboutCreftableItem(recipe, aliases)
 	item = {}
 
 	while true do
-		item["itemName"] = aliases[read()];
+		local name = read()
+		item["itemName"] = aliases[name] or name;
 		if findRecipe(item.itemName, recipe) then
 			break;
 		else
