@@ -11,6 +11,10 @@ function read()
 	return io.read()
 end
 
+function getAliases()
+	return require("aliases")
+end
+
 function getRecipes()
 	return require("recipes")
 end
@@ -313,7 +317,7 @@ function addVirtualItemToInventory(addableItem, inventory, itemsStacks)
 	local changes = {}
 
 	while addableItem.itemCount > 0 do
-		local slotToAddItem = findIf(inventory, function(slot) return slot.itemCount == 0 or (slot.itemName == addableItem.itemName and slot.itemCount < itemStackSize) end) -- ПО-ХУЙ -- unoptimised, but work :) LUA!!!
+		local slotToAddItem = findIf(inventory, function(slot) return slot.itemCount == 0 or (slot.itemName == addableItem.itemName and slot.itemCount < itemStackSize) end) -- Р В Р’В Р РЋРЎСџР В Р’В Р РЋРІР‚С”-Р В Р’В Р СћРЎвЂ™Р В Р’В Р В РІвЂљВ¬Р В Р’В Р Р†РІР‚С›РЎС› -- unoptimised, but work :) LUA!!!
 
 		if not slotToAddItem then
 			break;
@@ -744,6 +748,7 @@ end
 function main()
 	local recipes = getRecipes()
 	local itemsStacks = getItemsStacks()
+	local aliases = getAliases()
 
 	local craftStations = getCraftStations()
 	local storages = getStorages()
@@ -755,9 +760,9 @@ function main()
 
 
 
-	local craftableItem = askUserAboutCreftableItem(recipes)
+	local craftableItem = askUserAboutCreftableItem(recipes, aliases)
 	local craftableItems, needMaterials, needRecipes = getNeedItemsAndMaterialsAndRecipes(craftableItem, recipes)
-	pickUpMaterialsFromUser(needMaterials, storages, {})
+	pickUpMaterialsFromUser(needMaterials, storages, itemsStacks, aliases)
 
 
 	craftItems(craftableItems, needRecipes, storages, craftStations, robotInventory, itemsStacks, robot, inventoryController, crafting)
