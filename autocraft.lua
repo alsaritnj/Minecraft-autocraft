@@ -136,16 +136,26 @@ function findRecipe(itemName, recipes)
 	return findIf(recipes, function(tableEl) return tableEl.itemName == itemName end)
 end
 
+function findAliasByName(name, aliases)
+	for key, val in pairs(aliases) do
+		if val == name then
+			return key
+		end
+	end
+
+	return name
+end
+
 function findCraftStation(craftStationName, craftStations)
 	return findIf(craftStations, function(craftStation) return craftStation.craftStationName == craftStationName end)
 end
 
-function askUserAboutCreftableItem(recipe)
+function askUserAboutCreftableItem(recipe, aliases)
 	print("Write item name and quantity")
 	item = {}
 
 	while true do
-		item["itemName"] = read();
+		item["itemName"] = aliases[read()];
 		if findRecipe(item.itemName, recipe) then
 			break;
 		else
@@ -317,7 +327,7 @@ function addVirtualItemToInventory(addableItem, inventory, itemsStacks)
 	local changes = {}
 
 	while addableItem.itemCount > 0 do
-		local slotToAddItem = findIf(inventory, function(slot) return slot.itemCount == 0 or (slot.itemName == addableItem.itemName and slot.itemCount < itemStackSize) end) -- Р В Р’В Р РЋРЎСџР В Р’В Р РЋРІР‚С”-Р В Р’В Р СћРЎвЂ™Р В Р’В Р В РІвЂљВ¬Р В Р’В Р Р†РІР‚С›РЎС› -- unoptimised, but work :) LUA!!!
+		local slotToAddItem = findIf(inventory, function(slot) return slot.itemCount == 0 or (slot.itemName == addableItem.itemName and slot.itemCount < itemStackSize) end) -- ПО-ХУЙ -- unoptimised, but work :) LUA!!!
 
 		if not slotToAddItem then
 			break;
@@ -480,7 +490,7 @@ function getCountOfItemsThatCanBeCraftedFromMaterialsFromStorages(recipe, storag
 	return countOfItemsThatCanBeCraftedFromMaterialsFromStorages
 end
 
-function pickUpMaterialsFromUser(needMaterials, chests, itemsStacks)
+function pickUpMaterialsFromUser(needMaterials, chests, itemsStacks, aliases)
 	local currentChest = 1
 	local item
 	local i = 1
@@ -503,25 +513,12 @@ function pickUpMaterialsFromUser(needMaterials, chests, itemsStacks)
 		i = i + 1
 	end
 
-	print("Put next items into the chests")
+	print("Place the following items in chests:")
 	for i = 1, #needMaterials do
-		print(needMaterials[i].itemName.."\t"..needMaterials[i].itemCount.."\t("..math.floor(needMaterials[i].itemCount / getItemStackSize(needMaterials[i].itemName, itemsStacks)).." and "..needMaterials[i].itemCount % getItemStackSize(needMaterials[i].itemName, itemsStacks)..")")
+		print(findAliasByName(needMaterials[i].itemName, aliases).."\t"..needMaterials[i].itemCount.."\t("..math.floor(needMaterials[i].itemCount / getItemStackSize(needMaterials[i].itemName, itemsStacks)).." and "..needMaterials[i].itemCount % getItemStackSize(needMaterials[i].itemName, itemsStacks)..")")
 	end
 
-	print("Do you want to see how items shood lay in the chests?(Y/N)")
-	local input = read()
-	if input == "y" or input == "Y" then
-		for i = 1, #chests do
-			print("Chest "..i)
-			for j = 1, #chests[i] do
-				if chests[i][j].itemName then
-					print(j.." "..tostring(chests[i][j].itemName).."\t".. chests[i][j].itemCount)
-				end
-			end
-		end
-	end
-
-	print("Press enter if you finish put items in the chests")
+	print("Press enter if you are done placing items in chests")
 	read()
 end
 
