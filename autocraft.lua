@@ -538,7 +538,7 @@ function moveByOneDirection(block, robot, directionName, positiveStepMoveFunctio
 	end
 
 	i = robot[directionName]
-	while i ~= math.abs(block[directionName]) do
+	while i ~= block[directionName] do
 		moveFunction()
 		i = i + step
 	end
