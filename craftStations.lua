@@ -4,7 +4,7 @@ craftStationWithOneInputAndOneOutput = require("craftStationWithOneInputAndOneOu
 return 
 {
     
-	{craftStationName = "workbench",
+	{craftStationName = "CraftingTable",
 
 			isWorkingNow = function(this)
 				return false -- return false constantly becouse workbench finish craft in function "craft"
@@ -48,9 +48,9 @@ return
 
 			load = function(this, recipe, maxCountOfMaterialsPerOneCraft, storages, robotInventory, itemsStacks, robot, inventoryController) -- todo and test
 				local notTakenMaterials = {}
-				for i = 1, #recipe.recipe do
-					if recipe.recipe[i] then
-						notTakenMaterials[i] = {itemName = recipe.recipe[i].itemName, itemCount = maxCountOfMaterialsPerOneCraft} -- "itemCount = maxCountOfMaterialsPerOneCraft" becouse workbench on one craft use one pice of eqch material
+				for key, val in pairs(recipe.recipe) do
+					if recipe.recipe[key] then
+						notTakenMaterials[key] = {itemName = val.itemName, itemCount = maxCountOfMaterialsPerOneCraft} -- "itemCount = maxCountOfMaterialsPerOneCraft" becouse workbench on one craft use one pice of eqch material
 					end
 				end
 
@@ -86,9 +86,9 @@ return
 			end
 	},
 
-    craftStationWithOneInputAndOneOutput:construct("wire machine", 1, -1, 0, 7, 2),
+    craftStationWithOneInputAndOneOutput:construct("WireMachine", 1, -1, 0, 7, 2),
 
-    craftStationWithOneInputAndOneOutput:construct("rolling machine", 2, -1, 0, 7, 2),
+    craftStationWithOneInputAndOneOutput:construct("RollingMachine", 2, -1, 0, 7, 2),
 
-    craftStationWithOneInputAndOneOutput:construct("compressor", 3, -1, 0, 7, 2)
+    craftStationWithOneInputAndOneOutput:construct("Compressor", 3, -1, 0, 7, 2)
 }
