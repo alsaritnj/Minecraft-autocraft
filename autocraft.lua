@@ -199,14 +199,14 @@ function getNeedItemsAndMaterialsAndRecipes(craftableItem, recipes)
 				oneTimeItemAdd(needRecipes, materialRecipe)
 			end
 		end
-		
+
 		i = i + 1
 	end
 
 	for i = 1, #needItems do
 		local itemRecipe = needRecipes[findRecipe(needItems[i].itemName, needRecipes)]
 		needItems[i].itemCount = itemRecipe.receivedCount * math.ceil(needItems[i].itemCount / itemRecipe.receivedCount)
-		
+
 		for j = 1, #itemRecipe.materials do
 			local material = itemRecipe.materials[j]
 			local materialRecipe = needRecipes[findRecipe(material.itemName, needRecipes)]
@@ -485,7 +485,7 @@ function getCountOfItemsThatCanBeCraftedFromMaterialsFromStorages(recipe, storag
 		if not countOfItemsThatCanBeCraftedFromMaterialsFromStorages then
 			countOfItemsThatCanBeCraftedFromMaterialsFromStorages = math.floor(countOfMeterialInStorages / recipe.materials[i].needCount * recipe.receivedCount)
 		else
-			countOfItemsThatCanBeCraftedFromMaterialsFromStorages = min(countOfItemsThatCanBeCraftedFromMaterialsFromStorages, math.floor(countOfMeterialInStorages / recipe.materials[i].needCount))
+			countOfItemsThatCanBeCraftedFromMaterialsFromStorages = min(countOfItemsThatCanBeCraftedFromMaterialsFromStorages, math.floor(countOfMeterialInStorages / recipe.materials[i].needCount * recipe.receivedCount))
 		end
 	end
 	return countOfItemsThatCanBeCraftedFromMaterialsFromStorages
