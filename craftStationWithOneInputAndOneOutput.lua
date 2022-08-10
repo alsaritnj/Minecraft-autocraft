@@ -21,7 +21,7 @@ local craftStationWithOneInputAndOneOutput =
 		if not this[this.inputSlotNumber].itemName then
 			remainingSpaceForTheMaterialInInputSlot = materialStackSize
 		elseif (not ((this[this.inputSlotNumber].itemCount) < materialStackSize)) and (not ((this[this.inputSlotNumber].itemName) == (recipe.materials[1].itemName))) then
-			remainingSpaceForTheMaterialInInputSlot = materialStackSize - not this[this.inputSlotNumber].itemCount
+			remainingSpaceForTheMaterialInInputSlot = materialStackSize - this[this.inputSlotNumber].itemCount
 		else
 			remainingSpaceForTheMaterialInInputSlot = 0
 		end
